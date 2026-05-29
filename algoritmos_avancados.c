@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+//++++++++++ structs ++++++++++
+
 //criação da struct sala, onde é apontado os filhos da esquerda e direita
 typedef struct Sala{
     
@@ -9,6 +11,16 @@ typedef struct Sala{
     struct Sala* direita;
     struct Sala* esquerda;
 } Sala;
+
+//criação da struct do BST para as pistas
+typedef struct Pista{
+
+    char texto[50];
+    struct Pista* esquerda;
+    struct Pista* direita;
+} Pista;
+
+//++++++++++  funções +++++++++++
 
 //função de criar sala definindo os filhos como NULL
 Sala* criarSala(char nome[]){
@@ -20,11 +32,63 @@ Sala* criarSala(char nome[]){
     novaSala->direita = NULL;
     return novaSala;
 }
+//função de criar pista
+Pista* criarPista(char texto[]){
+
+    Pista* novaPista = (Pista*) malloc(sizeof(Pista));
+    strcpy(novaPista->texto, texto);
+
+    novaPista->direita = NULL;
+    novaPista->esquerda = NULL;
+    return novaPista;
+}
+
+//função para inserir pista 
+Pista* inserirPista(Pista* raiz, char texto[]){
+
+    //verifica se a arvore está vazia:
+    if(raiz==NULL){
+        
+        return criarPista(texto);
+    }
+    //ordem alfabetica
+    if(strcmp(texto, raiz->texto) < 0){
+
+        raiz->esquerda = inserirPista(raiz->esquerda, texto);
+    }else if(strcmp(texto, raiz->texto) > 0){
+
+        raiz->direita = inserirPista(raiz->direita, texto);
+    }
+    return raiz;
+}
+
+//função para deixar as pistas em ordem
+void emOrdem(Pista* raiz){
+
+    if(raiz != NULL){
+        emOrdem(raiz->esquerda);// aponta para o filho da esquerda
+        printf("- %s\n", raiz->texto);// aponta para o nó
+        emOrdem(raiz->direita);// aponta para o filho da direita
+    }
+}
 
 //função de explorar salas
-void explorarSalas(Sala* atual){
+//modificada para permitir que a função adicione pistas na BST
+void explorarSalas(Sala* atual, Pista** pistas){
 
     printf("\nVocê está em '%s'.", atual->nome);
+
+    if(strcmp(atual->nome, "Biblioteca") == 0){
+
+        *pistas = inserirPista(*pistas, "Livro antigo");
+        printf("\nVocê encontrou uma pista: 'Livro antigo'\n");
+    }
+
+    if(strcmp(atual->nome, "Jardim") == 0){
+
+        *pistas = inserirPista(*pistas, "Chave enferrujada");
+        printf("\nVocê encontrou uma pista: 'Chave enferrujada'\n");
+    }
 
     //verifica se o usuario está em um nó folha
     if(atual->esquerda == NULL && atual->direita == NULL){
@@ -43,13 +107,13 @@ void explorarSalas(Sala* atual){
     //if para escolhas
     if(opcao == 'e'){
         if(atual->esquerda != NULL){
-            explorarSalas(atual->esquerda);
+            explorarSalas(atual->esquerda, pistas);
         }else{
             printf("Não existe caminho para esquerda.\n");
         }
     }else if(opcao == 'd'){
         if(atual->direita != NULL){
-            explorarSalas(atual->direita);
+            explorarSalas(atual->direita, pistas);
         }else{
             printf("Não tem caminho para direita.\n");
         }
@@ -69,7 +133,24 @@ void liberarMapa(Sala* atual){
     free(atual);
 }
 
+//função para limpar a BST de pistas
+void limparPistas(Pista* raiz){
+
+    if(raiz == NULL){
+        return;
+    }
+
+    limparPistas(raiz->esquerda);
+    limparPistas(raiz->direita);
+
+    free(raiz);
+}
+
+//+++++ main +++++
+
 int main() {
+
+    Pista* pistas = NULL;
 
     //criação de 5 salas 
     Sala* hall = criarSala("Hall da entrada");
@@ -85,8 +166,13 @@ int main() {
     cozinha->direita = jardim;
 
     //chamando função para explorar o lugar
-    explorarSalas(hall);
+    explorarSalas(hall, &pistas);
+
+    printf("\nPistas encontradas: \n");
+    emOrdem(pistas);
+
     liberarMapa(hall);
+    limparPistas(pistas);
     return 0;
 }
 
